@@ -95,6 +95,8 @@ const log = async (request: Request, additionalData) => {
 export { log };
 ```
 
+- server.ts
+
 ```typescript
 import { log } from "./logger.ts";
 
