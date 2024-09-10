@@ -15,11 +15,12 @@ Options:
   --url      KV connect url. can be found on the KV tab of the admin page.
   --prefix   KV key prefix. comma-separated string.
   --exclude  not display record key.
+  --include  only display record key.
 `;
 
 const flags = parseArgs(Deno.args, {
   boolean: ["help", "json"],
-  string: ["url", "prefix", "exclude"],
+  string: ["url", "prefix", "exclude", "include"],
   default: { json: false },
   negatable: [],
 });
@@ -30,9 +31,18 @@ const parsePrefix = (prefix) => {
   );
 };
 
-const filterRecord = (record, exclude) => {
+const filterRecord = (record, exclude, include) => {
   return Object.fromEntries(
-    Object.entries(record).filter(([key, _]) => !exclude.includes(key)),
+    Object.entries(record).filter(([key, _]) => {
+      if (include.length > 0) {
+        return include.includes(key);
+      }
+      if (exclude.length > 0) {
+        return !exclude.includes(key);
+      }
+
+      return true;
+    }),
   );
 };
 
@@ -41,7 +51,10 @@ const transformValue = (record) => {
     ...record,
     ...record.value,
     ...(record.value.ts
-      ? { ts: new Date(record.value.ts * 1000).toISOString() }
+      ? {
+        ts: record.value.ts,
+        time: new Date(record.value.ts * 1000).toISOString(),
+      }
       : {}),
     ...(record.value.url ? { url: decodeURI(record.value.url) } : {}),
     ...(record.value.headers?.referer
@@ -54,6 +67,11 @@ const transformValue = (record) => {
 };
 
 const main = async (flags) => {
+  if (flags.exclude && flags.include) {
+    console.error("exclude and include options are exclusive.");
+    Deno.exit(1);
+  }
+
   const kv = await Deno.openKv(flags.url);
   const results = kv.list({ prefix: parsePrefix(flags.prefix) });
 
@@ -61,8 +79,11 @@ const main = async (flags) => {
   for await (const r of results) records.push(r);
 
   const exclude = flags.exclude ? flags.exclude.split(",") : [];
+  const include = flags.include ? flags.include.split(",") : [];
 
-  const rows = records.map((r) => (filterRecord(transformValue(r), exclude)));
+  const rows = records.map((
+    r,
+  ) => (filterRecord(transformValue(r), exclude, include)));
 
   if (flags.json) {
     console.log(JSON.stringify(rows));
