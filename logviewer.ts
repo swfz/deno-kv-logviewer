@@ -47,6 +47,14 @@ const filterRecord = (record, exclude, include) => {
 };
 
 const transformValue = (record) => {
+  const tryDecodeURI = (input) => {
+    try {
+      return decodeURI(input);
+    } catch {
+      return input;
+    }
+  };
+
   return {
     ...record,
     ...record.value,
@@ -56,7 +64,7 @@ const transformValue = (record) => {
         time: new Date(record.value.ts * 1000).toISOString(),
       }
       : {}),
-    ...(record.value.url ? { url: decodeURI(record.value.url) } : {}),
+    ...(record.value.url ? { url: tryDecodeURI(record.value.url) } : {}),
     ...(record.value.headers?.referer
       ? { referer: record.value.headers.referer }
       : {}),
