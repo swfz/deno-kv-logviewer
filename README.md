@@ -7,7 +7,7 @@ Deno KVに保存したデータを見る用のスクリプト
 ## install
 
 ```
-deno install --allow-net --allow-env --unstable-kv https://github.com/swfz/deno-kv-logviewer/raw/main/logviewer.ts
+deno install --blobal --allow-net --allow-env --unstable-kv https://github.com/swfz/deno-kv-logviewer/raw/main/logviewer.ts
 ```
 
 ## Prerequisites
